@@ -14,5 +14,19 @@ this program.  If not, see <http://www.gnu.org/licenses/>. -}
 
 module Main where
 
+import System.Environment (getArgs)
+import System.Exit (exitFailure)
+
+import Fragment (parseFile, parseStdin)
+
 main :: IO ()
-main = putStrLn "Hello, world!"
+main = do
+  args <- getArgs
+  parsed <- case args of
+              [] -> parseStdin
+              [f] -> parseFile f
+              _ -> usage >> exitFailure
+  print parsed
+
+usage :: IO ()
+usage = putStrLn "usage: lyt [file]"

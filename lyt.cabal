@@ -28,13 +28,15 @@ tested-with:         GHC==7.6.3
 executable lyt
   hs-source-dirs:      src
   default-language:    Haskell2010
-  -- other-extensions:    
+  default-extensions:  DeriveDataTypeable
+                     , DeriveGeneric
+  -- other-extensions:
   ghc-options:         -Wall
                        -fwarn-tabs
                        -fwarn-incomplete-uni-patterns
                        -fwarn-monomorphism-restriction
                        -fwarn-auto-orphans
   main-is:             Main.hs
-  -- other-modules:       
+  other-modules:       Fragment
   build-depends:       base >=4.6 && <4.7
-                     , vector >=0.10 && <0.11
+                     , parsec >=3.1.3 && <3.2
