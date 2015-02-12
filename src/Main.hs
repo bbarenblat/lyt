@@ -22,6 +22,7 @@ import GHC.Generics (Generic)
 import Data.Functor ((<$>))
 import System.Environment (getArgs)
 import System.Exit (exitFailure)
+import System.IO (hPutStrLn, stderr)
 
 import Fragment (parseFragments)
 import Tangle (tangle)
@@ -48,7 +49,7 @@ main = do
       input <- case file of Nothing -> getContents
                             Just path -> readFile path
       case doOperation op (pathString, input) of
-        Left err -> putStrLn err >> exitFailure
+        Left err -> hPutStrLn stderr err >> exitFailure
         Right result -> putStr result
 
 doOperation :: Operation -> (FilePath, String) -> Either String String
