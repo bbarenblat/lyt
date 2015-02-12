@@ -18,6 +18,7 @@ import System.Environment (getArgs)
 import System.Exit (exitFailure)
 
 import Fragment (parseFile, parseStdin)
+import Tangle (tangle)
 
 main :: IO ()
 main = do
@@ -26,7 +27,9 @@ main = do
               [] -> parseStdin
               [f] -> parseFile f
               _ -> usage >> exitFailure
-  print parsed
+  case parsed of
+    Left err -> print err >> exitFailure
+    Right ok -> print $ tangle ok
 
 usage :: IO ()
 usage = putStrLn "usage: lyt [file]"

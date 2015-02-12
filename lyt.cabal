@@ -30,7 +30,7 @@ executable lyt
   default-language:    Haskell2010
   default-extensions:  DeriveDataTypeable
                      , DeriveGeneric
-  -- other-extensions:
+  other-extensions:    RecordWildCards
   ghc-options:         -Wall
                        -fwarn-tabs
                        -fwarn-incomplete-uni-patterns
@@ -38,5 +38,7 @@ executable lyt
                        -fwarn-auto-orphans
   main-is:             Main.hs
   other-modules:       Fragment
+                     , Tangle
   build-depends:       base >=4.6 && <4.7
+                     , containers >=0.5 && <0.6
                      , parsec >=3.1.3 && <3.2
