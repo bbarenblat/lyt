@@ -12,27 +12,20 @@ PARTICULAR PURPOSE.  See the GNU General Public License for more details.
 You should have received a copy of the GNU General Public License along with
 this program.  If not, see <http://www.gnu.org/licenses/>. -}
 
-module Main where
+module Weave (weave) where
 
-import System.Environment (getArgs)
-import System.Exit (exitFailure)
+import Fragment
 
-import Fragment (parseFile, parseStdin)
-import Tangle (tangle)
-import Weave (weave)
+weave :: [Fragment] -> Either String String
+weave = Right . concatMap weaveFragment
 
-main :: IO ()
-main = do
-  args <- getArgs
-  parsed <- case args of
-              [] -> parseStdin
-              [f] -> parseFile f
-              _ -> usage >> exitFailure
-  case parsed of
-    Left err -> print err >> exitFailure
-    Right result -> case weave result of
-      Left err -> print err >> exitFailure
-      Right ok -> putStrLn ok
+weaveFragment :: Fragment -> String
+weaveFragment (Documentation text) = text
+weaveFragment (BlockCode name body) =
+  "\\begin{LytBlockCode}{" ++ name ++ "}\n"
+  ++ concatMap weaveCodeOrReference body
+  ++ "\\end{LytBlockCode}\n"
 
-usage :: IO ()
-usage = putStrLn "usage: lyt [file]"
+weaveCodeOrReference :: CodeOrReference -> String
+weaveCodeOrReference (Code text) = text
+weaveCodeOrReference (Reference name) = "\\LytFragmentReference{" ++ name ++ "}"
