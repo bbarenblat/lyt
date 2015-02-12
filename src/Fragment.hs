@@ -12,11 +12,8 @@ PARTICULAR PURPOSE.  See the GNU General Public License for more details.
 You should have received a copy of the GNU General Public License along with
 this program.  If not, see <http://www.gnu.org/licenses/>. -}
 
-{-# LANGUAGE RecordWildCards #-}
-module Fragment ( Fragment
+module Fragment ( Fragment(..)
                 , CodeOrReference(..)
-                , isBlockCode
-                , blockName, blockContents
                 , parseStdin
                 , parseFile) where
 
@@ -33,18 +30,6 @@ import Text.Parsec.String
 data Fragment = Documentation String
               | BlockCode String [CodeOrReference]
               deriving (Eq, Show, Data, Typeable, Generic)
-
-isBlockCode :: Fragment -> Bool
-isBlockCode (Documentation {..}) = False
-isBlockCode (BlockCode {..}) = True
-
-blockName :: Fragment -> String
-blockName (Documentation {..}) = error "Documentation fragments are unnamed"
-blockName (BlockCode name _) = name
-
-blockContents :: Fragment -> [CodeOrReference]
-blockContents (Documentation {..}) = error "Documentation fragments have no code"
-blockContents (BlockCode _ body) = body
 
 data CodeOrReference = Code String
                      | Reference String

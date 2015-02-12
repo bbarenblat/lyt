@@ -19,6 +19,7 @@ import System.Exit (exitFailure)
 
 import Fragment (parseFile, parseStdin)
 import Tangle (tangle)
+import Weave (weave)
 
 main :: IO ()
 main = do
