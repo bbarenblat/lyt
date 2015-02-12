@@ -12,10 +12,7 @@ PARTICULAR PURPOSE.  See the GNU General Public License for more details.
 You should have received a copy of the GNU General Public License along with
 this program.  If not, see <http://www.gnu.org/licenses/>. -}
 
-module Fragment ( Fragment
-                , parseStdin
-                , parseFile
-                , ParseError) where
+module Fragment where
 
 import Data.Data (Data)
 import Data.Typeable (Typeable)
@@ -31,22 +28,21 @@ data Fragment = Documentation String
               | BlockCode String String
               deriving (Eq, Show, Data, Typeable, Generic)
 
-parseStdin :: IO (Either ParseError [Fragment])
-parseStdin = parse literateFile "<stdin>" <$> hGetContents stdin
-
-parseFile :: FilePath -> IO (Either ParseError [Fragment])
-parseFile = parseFromFile literateFile
-
 literateFile :: Parser [Fragment]
-literateFile = alternate documentation blockCode
+literateFile = many (blockCode <|> documentation)
 
 documentation :: Parser Fragment
-documentation = Documentation <$> manyTill anyChar (void (string "<<") <|> eof)
+documentation = do
+  body <- many1Till anyChar (eof <|> lookAhead (void blockCode))
+  return $ Documentation body
 
 blockCode :: Parser Fragment
-blockCode =
-  BlockCode <$> manyTill anyChar (void $ string ">>=")
-            <*> manyTill anyChar (void $ char '@')
+blockCode = do
+  void $ string "<<"
+  name <- manyTill anyChar (try $ string ">>=")
+  body <- manyTill anyChar (char '@')
+  return $ BlockCode name body
 
-alternate :: Parser a -> Parser a -> Parser [a]
-alternate x y = (:) <$> x <*> (alternate y x <|> pure [])
+many1Till :: Stream s m t
+             => ParsecT s u m a -> ParsecT s u m end -> ParsecT s u m [a]
+many1Till p end = (:) <$> p <*> manyTill p end
