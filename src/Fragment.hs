@@ -14,8 +14,7 @@ this program.  If not, see <http://www.gnu.org/licenses/>. -}
 
 module Fragment ( Fragment(..)
                 , CodeOrReference(..)
-                , parseStdin
-                , parseFile) where
+                , parseFragments) where
 
 import Data.Data (Data)
 import Data.Typeable (Typeable)
@@ -23,7 +22,6 @@ import GHC.Generics (Generic)
 
 import Control.Applicative ((<$>), (<*>))
 import Control.Monad (void)
-import System.IO (hGetContents, stdin)
 import Text.Parsec
 import Text.Parsec.String
 
@@ -35,11 +33,11 @@ data CodeOrReference = Code String
                      | Reference String
                      deriving (Eq, Show, Data, Typeable, Generic)
 
-parseStdin :: IO (Either ParseError [Fragment])
-parseStdin = parse literateFile "<stdin>" <$> hGetContents stdin
-
-parseFile :: FilePath -> IO (Either ParseError [Fragment])
-parseFile = parseFromFile literateFile
+parseFragments :: FilePath -> String -> Either String [Fragment]
+parseFragments path input =
+  case parse literateFile path input of
+    Right result -> Right result
+    Left err -> Left $ show err
 
 literateFile :: Parser [Fragment]
 literateFile = many (blockCode <|> documentation)
@@ -52,7 +50,7 @@ documentation = do
 blockCode :: Parser Fragment
 blockCode = do
   void $ string "<<"
-  name <- many1Till anyChar (try (string ">>=" <?> "start of code block"))
+  name <- many1Till (noneOf "\r\n") (try (string ">>=" <?> "start of code block"))
   body <- many1Till (reference <|> code) (char '@')
   return $ BlockCode name body
 

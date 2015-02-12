@@ -12,27 +12,62 @@ PARTICULAR PURPOSE.  See the GNU General Public License for more details.
 You should have received a copy of the GNU General Public License along with
 this program.  If not, see <http://www.gnu.org/licenses/>. -}
 
+{-# LANGUAGE LambdaCase #-}
 module Main where
 
+import Data.Data (Data)
+import Data.Typeable (Typeable)
+import GHC.Generics (Generic)
+
+import Data.Functor ((<$>))
 import System.Environment (getArgs)
 import System.Exit (exitFailure)
 
-import Fragment (parseFile, parseStdin)
+import Fragment (parseFragments)
 import Tangle (tangle)
 import Weave (weave)
 
+data Operation = Tangle | Weave
+                  deriving (Eq, Show, Data, Typeable, Generic, Read)
+
+parseOp :: String -> Maybe Operation
+parseOp "tangle" = Just Tangle
+parseOp "weave" = Just Weave
+parseOp _ = Nothing
+
+data Configuration = Configuration Operation (Maybe FilePath)
+                   deriving (Eq, Show, Data, Typeable, Generic)
+
 main :: IO ()
 main = do
-  args <- getArgs
-  parsed <- case args of
-              [] -> parseStdin
-              [f] -> parseFile f
-              _ -> usage >> exitFailure
-  case parsed of
-    Left err -> print err >> exitFailure
-    Right result -> case weave result of
-      Left err -> print err >> exitFailure
-      Right ok -> putStrLn ok
+  processArguments <$> getArgs >>= \case
+    Nothing -> usage >> exitFailure
+    Just (Configuration op file) -> do
+      let pathString = case file of Nothing -> "<stdin>"
+                                    Just path -> path
+      input <- case file of Nothing -> getContents
+                            Just path -> readFile path
+      case doOperation op (pathString, input) of
+        Left err -> putStrLn err >> exitFailure
+        Right result -> putStr result
+
+doOperation :: Operation -> (FilePath, String) -> Either String String
+doOperation op (path, input) = do
+  parsed <- parseFragments path input
+  case op of
+    Tangle -> tangle parsed
+    Weave -> weave parsed
+
+processArguments :: [String] -> Maybe Configuration
+processArguments [opString] =
+  case parseOp opString of
+    Just op -> Just $ Configuration op Nothing
+    Nothing -> Nothing
+processArguments [opString, file] =
+  case parseOp opString of
+    Just op -> Just $ Configuration op (Just file)
+    Nothing -> Nothing
+processArguments _ = Nothing
 
 usage :: IO ()
-usage = putStrLn "usage: lyt [file]"
+usage = putStrLn "usage: lyt (tangle|weave) [file]"
