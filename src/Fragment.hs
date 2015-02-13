@@ -34,8 +34,6 @@ import Control.Monad (void)
 import Text.Parsec
 import Text.Parsec.String
 
-import Debug.Trace
-
 data Fragment = Documentation String
               | BlockCode String [CodeOrReference]
               deriving (Eq, Show, Data, Typeable, Generic)
@@ -47,7 +45,7 @@ data CodeOrReference = Code String
 parseFragments :: FilePath -> String -> Either String [Fragment]
 parseFragments path input =
   case parse literateFile path input of
-    Right result -> traceShow result $ Right result
+    Right result -> Right result
     Left err -> Left $ show err
 
 literateFile :: Parser [Fragment]
