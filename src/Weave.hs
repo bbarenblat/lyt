@@ -23,8 +23,18 @@ weaveFragment :: Fragment -> String
 weaveFragment (Documentation text) = text
 weaveFragment (BlockCode name body) =
   "\\begin{LytBlockCode}{" ++ name ++ "}\n"
-  ++ concatMap weaveCodeOrReference body
+  ++ weaveBlockBody body
   ++ "\\end{LytBlockCode}\n"
+
+weaveBlockBody :: [CodeOrReference] -> String
+weaveBlockBody ((Code first):rest) =
+  {- The first block is code.  To make sure it gets typeset correctly, drop
+  everything up to the first newline or non-space character. -}
+  (case dropWhile (==' ') first of
+     '\n' : first' -> first'
+     first' -> first')
+  ++ concatMap weaveCodeOrReference rest
+weaveBlockBody blocks = concatMap weaveCodeOrReference blocks
 
 weaveCodeOrReference :: CodeOrReference -> String
 weaveCodeOrReference (Code text) = text
