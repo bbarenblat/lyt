@@ -34,7 +34,7 @@ tangle fragments =
 
 fragmentGraph :: [Fragment] -> FragmentGraph
 fragmentGraph =
-  Map.fromListWith (++) .
+  Map.fromListWith (flip (++)) .
     map (\block -> blockToPair $ assert (isBlockCode block) block)
   where blockToPair (BlockCode name body) = (name, body)
         blockToPair (Documentation {..}) =
